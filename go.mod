@@ -1,4 +1,4 @@
-module github.com/be9/grpc-js-go-test
+module github.com/be9/dual-grpc-go
 
 go 1.18
 

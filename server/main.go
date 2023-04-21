@@ -4,13 +4,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/be9/grpc-js-go-test/server/util"
+	"github.com/be9/dual-grpc-go/server/util"
 	"golang.org/x/net/trace"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"net"
 	"net/http"
 
-	pb "github.com/be9/grpc-js-go-test/proto/testservice"
+	pb "github.com/be9/dual-grpc-go/proto/testservice"
 	"google.golang.org/grpc"
 )
 
@@ -31,8 +32,19 @@ func genDetails(n int) []string {
 	return strings
 }
 
-func (s *server) GetFoos(context.Context, *pb.GetFoosRequest) (*pb.GetFoosResponse, error) {
-	log.Printf("GetFoos")
+func getUserAgent(ctx context.Context) string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "unknown"
+	}
+	if agent, ok := md["user-agent"]; ok {
+		return agent[0]
+	}
+	return "unknown"
+}
+
+func (s *server) GetFoos(ctx context.Context, req *pb.GetFoosRequest) (*pb.GetFoosResponse, error) {
+	log.Printf("GetFoos [agent %v]", getUserAgent(ctx))
 	foos := make([]*pb.Foo, 10)
 	for i := range foos {
 		foos[i] = &pb.Foo{
@@ -44,7 +56,7 @@ func (s *server) GetFoos(context.Context, *pb.GetFoosRequest) (*pb.GetFoosRespon
 }
 
 func (s *server) GetFoobars(ctx context.Context, req *pb.GetFoobarsRequest) (*pb.GetFoobarsResponse, error) {
-	log.Printf("GetFoobars [foo_id=%s]", req.GetFooId())
+	log.Printf("GetFoobars [foo_id=%s,agent=%v]", req.GetFooId(), getUserAgent(ctx))
 	foobars := make([]*pb.Foobar, 10)
 	for i := range foobars {
 		foobars[i] = &pb.Foobar{
